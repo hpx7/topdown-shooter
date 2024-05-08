@@ -236,7 +236,7 @@ const store: Application = {
 
     if (message.type === ClientMessageType.SetNickname) {
       player.nickname = message.nickname;
-      updateRoomConfig(game, roomId);
+      updateRoomConfig(game, roomId, player);
     } else if (message.type === ClientMessageType.SetDirection) {
       player.direction = message.direction;
     } else if (message.type === ClientMessageType.SetAngle) {
@@ -471,11 +471,17 @@ async function endGameCleanup(roomId: string, game: InternalState, winningPlayer
   }, 10000);
 }
 
-async function updateRoomConfig(game: InternalState, roomId: string) {
+async function updateRoomConfig(game: InternalState, roomId: string, playerNewNickname?: InternalPlayer) {
   const roomConfig: RoomConfig = {
     capacity: 0,
     winningScore: game.winningScore,
-    playerNicknameMap: Object.fromEntries(game.players.map((player) => [player.id, player.nickname ?? player.id])),
+    playerNicknameMap: Object.fromEntries(game.players.map((player) => {
+      if (playerNewNickname && player.id == playerNewNickname.id) {
+        return [player.id, playerNewNickname.nickname ?? player.id];
+      } else {
+        return [player.id, player.nickname ?? player.id];
+      }
+    })),
     isGameEnd: game.isGameEnd,
     winningPlayerId: game.winningPlayerId,
   };

@@ -39,7 +39,9 @@ export class GameScene extends Scene {
   private respawnText: Phaser.GameObjects.Text | undefined = undefined;
   private endText: Phaser.GameObjects.Text | undefined = undefined;
   private disconnectText: Phaser.GameObjects.Text | undefined = undefined;
+  private serverRequestBuffer: number = Date.now();
 
+  static SERVER_REQ_BUFFER_LENGTH = 500;
   static NAME = "scene-game";
 
   constructor() {
@@ -334,10 +336,16 @@ export class GameScene extends Scene {
     state.players
       .filter((p) => p.id === this.currentUserID && p.nickname !== sessionStorage.getItem("bullet-mania-nickname"))
       .forEach(() => {
-        this.connection?.writeJson({
-          type: ClientMessageType.SetNickname,
-          nickname: sessionStorage.getItem("bullet-mania-nickname"),
-        });
+        if (
+          sessionStorage.getItem("bullet-mania-nickname") &&
+          Date.now() - this.serverRequestBuffer > GameScene.SERVER_REQ_BUFFER_LENGTH
+        ) {
+          this.serverRequestBuffer = Date.now();
+          this.connection?.writeJson({
+            type: ClientMessageType.SetNickname,
+            nickname: sessionStorage.getItem("bullet-mania-nickname"),
+          });
+        }
       });
 
     // calc leaderboard
