@@ -220,23 +220,23 @@ async function getToken(googleIdToken: string | undefined): Promise<Token> {
       value: maybeToken,
     } as Token;
   }
-  // if (googleIdToken == null) {
-  try {
-    const loginResponse = await hathoraSdk.authV1.loginAnonymous();
-    return { value: loginResponse.token, type: "anonymous" };
-  } catch (err) {
-    if (err instanceof errors.ApiError) {
+  let loginResponse;
+  if (googleIdToken == null) {
+    try {
+      loginResponse = await hathoraSdk.authV1.loginAnonymous();
+      return { value: loginResponse.token, type: "anonymous" };
+    } catch (err) {
       throw new Error("Failed to login anonymously");
     }
   }
-  // }
-  // const { loginResponse } = await hathoraSdk.authV1.loginGoogle({ idToken: googleIdToken });
-  // if (loginResponse == null) {
-  //   throw new Error("Failed to login with google");
-  // }
-  // sessionStorage.setItem("bullet-mania-token", loginResponse.token);
-  // sessionStorage.setItem("bullet-mania-token-type", "google");
-  // return { value: loginResponse.token, type: "google" };
+  try {
+    loginResponse = await hathoraSdk.authV1.loginGoogle({ idToken: googleIdToken });
+    sessionStorage.setItem("bullet-mania-token", loginResponse.token);
+    sessionStorage.setItem("bullet-mania-token-type", "google");
+    return { value: loginResponse.token, type: "google" };
+  } catch (err) {
+    throw new Error("Failed to login with google");
+  }
 }
 
 function getRoomIdFromUrl(): string | undefined {
