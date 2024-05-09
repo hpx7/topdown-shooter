@@ -1,6 +1,7 @@
 import React from "react";
 import { GoogleLogin } from "@react-oauth/google";
-import { LobbyVisibility, Region } from "@hathora/cloud-sdk-typescript/dist/sdk/models/shared";
+import * as errors from "@hathora/cloud-sdk-typescript/models/errors";
+import { LobbyVisibility, Region } from "@hathora/cloud-sdk-typescript/models/components";
 
 import { getHathoraSdk, isReadyForConnect, Token } from "../../utils";
 import { RoomConfig } from "../../../../common/types";
@@ -82,24 +83,27 @@ export function GameCreator(props: GameCreatorProps) {
                     playerNicknameMap: {},
                     isGameEnd: false,
                   };
-                  const { lobbyV3 } = await hathoraSdk.lobbyV3.createLobby(
+                  const lobbyV3 = await hathoraSdk.lobbyV3.createLobby(
+                    { playerAuth: playerToken.value },
                     {
-                      createLobbyV3Params: {
-                        region,
-                        visibility: visibility as LobbyVisibility,
-                        roomConfig: JSON.stringify(roomConfig),
-                      },
-                    },
-                    { playerAuth: playerToken.value }
+                      region,
+                      visibility: visibility as LobbyVisibility,
+                      roomConfig: JSON.stringify(roomConfig),
+                    }
                   );
-                  if (lobbyV3 == null) {
-                    throw new Error("Failed to create lobby");
-                  }
                   // Wait until lobby connection details are ready before redirect player to match
                   await isReadyForConnect(appId, lobbyV3.roomId, hathoraSdk);
                   window.location.href = `/${lobbyV3.roomId}`; //update url
-                } catch (e) {
-                  setError(e instanceof Error ? e.toString() : typeof e === "string" ? e : "Unknown error");
+                } catch (err) {
+                  switch (true) {
+                    case err instanceof errors.ApiError: {
+                      console.error(err); // handle exception
+                      throw new Error("Failed to create lobby");
+                    }
+                    default: {
+                      setError(err instanceof Error ? err.toString() : typeof err === "string" ? err : "Unknown error");
+                    }
+                  }
                 } finally {
                   setIsLoading(false);
                 }
