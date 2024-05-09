@@ -13,7 +13,7 @@ import { HathoraCloud } from "@hathora/cloud-sdk-typescript";
 const hathoraSdk = new HathoraCloud({
   serverURL: process.env.HATHORA_SERVER_URL ?? undefined,
   appId: process.env.HATHORA_APP_ID!,
-  security: { hathoraDevToken: process.env.DEVELOPER_TOKEN! },
+  hathoraDevToken: process.env.DEVELOPER_TOKEN!,
 });
 
 // The millisecond tick rate
@@ -156,7 +156,7 @@ const store: Application = {
     console.log("subscribeUser", roomId, userId);
     try {
       const roomInfo = await hathoraSdk.roomV2.getRoomInfo(roomId);
-      const roomConfig = JSON.parse(roomInfo.room!.roomConfig) as RoomConfig;
+      const roomConfig = JSON.parse(roomInfo.roomConfig!) as RoomConfig;
 
       if (!rooms.has(roomId)) {
         rooms.set(roomId, initializeRoom(roomConfig.capacity, roomConfig.winningScore, roomConfig.isGameEnd));
@@ -485,5 +485,5 @@ async function updateRoomConfig(game: InternalState, roomId: string, playerNewNi
     isGameEnd: game.isGameEnd,
     winningPlayerId: game.winningPlayerId,
   };
-  return await hathoraSdk.roomV2.updateRoomConfig({ roomConfig: JSON.stringify(roomConfig) }, roomId);
+  return await hathoraSdk.roomV2.updateRoomConfig(roomId, { roomConfig: JSON.stringify(roomConfig) } );
 }
