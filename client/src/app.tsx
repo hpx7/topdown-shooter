@@ -226,6 +226,7 @@ async function getToken(googleIdToken: string | undefined): Promise<Token> {
       loginResponse = await hathoraSdk.authV1.loginAnonymous();
       return { value: loginResponse.token, type: "anonymous" };
     } catch (err) {
+      console.log(err);
       throw new Error("Failed to login anonymously");
     }
   }
@@ -235,6 +236,7 @@ async function getToken(googleIdToken: string | undefined): Promise<Token> {
     sessionStorage.setItem("bullet-mania-token-type", "google");
     return { value: loginResponse.token, type: "google" };
   } catch (err) {
+    console.log(err);
     throw new Error("Failed to login with google");
   }
 }
