@@ -1,7 +1,6 @@
 import ReactDOM from "react-dom/client";
 import React, { useEffect, useState } from "react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import * as errors from "@hathora/cloud-sdk-typescript/models/errors";
 import { HathoraConnection } from "@hathora/client-sdk";
 
 import { SessionMetadata, RoomConfig } from "../../common/types";
@@ -56,7 +55,7 @@ function App() {
         }
 
         try {
-          const roomConfig = JSON.parse(lobbyInfo.roomConfig) as RoomConfig;
+          const roomConfig = JSON.parse(lobbyInfo.roomConfig || "") as RoomConfig;
 
           if (!roomConfig.isGameEnd) {
             const connect = new HathoraConnection(roomIdFromUrl, connectionInfo);
