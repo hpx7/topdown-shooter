@@ -71,10 +71,10 @@ export function GameCreator(props: GameCreatorProps) {
             onClick={async () => {
               if (!isLoading) {
                 setError("");
-                // if (!Token.isGoogleToken(playerToken) && visibility !== "local") {
-                //   setError("Google sign-in is required to create a match");
-                //   return;
-                // }
+                if (!Token.isGoogleToken(playerToken) && visibility !== "local") {
+                  setError("Google sign-in is required to create a match");
+                  return;
+                }
                 setIsLoading(true);
                 try {
                   const roomConfig: RoomConfig = {
