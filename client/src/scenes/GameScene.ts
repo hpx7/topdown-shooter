@@ -572,6 +572,8 @@ function lerpBullet(from: Bullet, to: Bullet, pctElapsed: number): Bullet {
   };
 }
 
+// We throttle setNickname here because it calls an update server req and we don't want to potentially make this call
+// every tick.
 function setNicknameThrottled(nickname: string | null, connection: HathoraConnection | undefined) {
   if (nickname && Date.now() - lastServerReqTimestamp > GameScene.SERVER_REQ_THROTTLE_MS) {
     lastServerReqTimestamp = Date.now();
