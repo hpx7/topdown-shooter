@@ -1,5 +1,4 @@
 import Phaser, { Math as pMath, Scene } from "phaser";
-import debounce from "lodash.debounce";
 import { InterpolationBuffer } from "interpolation-buffer";
 import { HathoraClient, HathoraConnection } from "@hathora/client-sdk";
 
@@ -8,6 +7,7 @@ import { ClientMessageType, ServerMessageType } from "../../../common/messages";
 import map from "../../../common/map.json";
 
 const BULLETS_MAX = 3;
+let lastServerReqTimestamp = Date.now();
 
 export class GameScene extends Scene {
   private preloaderContainer!: HTMLDivElement;
@@ -40,9 +40,8 @@ export class GameScene extends Scene {
   private respawnText: Phaser.GameObjects.Text | undefined = undefined;
   private endText: Phaser.GameObjects.Text | undefined = undefined;
   private disconnectText: Phaser.GameObjects.Text | undefined = undefined;
-  private serverRequestBuffer: number = Date.now();
 
-  static SERVER_REQ_BUFFER_LENGTH = 500;
+  static SERVER_REQ_THROTTLE_MS = 500;
   static NAME = "scene-game";
 
   constructor() {
@@ -337,18 +336,7 @@ export class GameScene extends Scene {
     state.players
       .filter((p) => p.id === this.currentUserID && p.nickname !== sessionStorage.getItem("bullet-mania-nickname"))
       .forEach(() => {
-        if (
-          sessionStorage.getItem("bullet-mania-nickname")
-          // && Date.now() - this.serverRequestBuffer > GameScene.SERVER_REQ_BUFFER_LENGTH
-        ) {
-          debounce(() => {
-            // this.serverRequestBuffer = Date.now();
-            this.connection?.writeJson({
-              type: ClientMessageType.SetNickname,
-              nickname: sessionStorage.getItem("bullet-mania-nickname"),
-            });
-          }, 500);
-        }
+        setNicknameThrottled(sessionStorage.getItem("bullet-mania-nickname"), this.connection);
       });
 
     // calc leaderboard
@@ -582,4 +570,14 @@ function lerpBullet(from: Bullet, to: Bullet, pctElapsed: number): Bullet {
       y: from.position.y + (to.position.y - from.position.y) * pctElapsed,
     },
   };
+}
+
+function setNicknameThrottled(nickname: string | null, connection: HathoraConnection | undefined) {
+  if (nickname && Date.now() - lastServerReqTimestamp > GameScene.SERVER_REQ_THROTTLE_MS) {
+    lastServerReqTimestamp = Date.now();
+    connection?.writeJson({
+      type: ClientMessageType.SetNickname,
+      nickname: nickname,
+    });
+  }
 }
