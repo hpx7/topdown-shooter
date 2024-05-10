@@ -316,10 +316,10 @@ export class GameScene extends Scene {
               this,
               player.position.x,
               player.position.y,
-              `p${player.sprite}${player.isReloading ? "_reload" : ""}`
+              `p${player.sprite}${player.isReloading ? "_reload" : ""}`,
             ).setRotation(player.aimAngle),
-          ])
-      )
+          ]),
+      ),
     );
 
     // Do the same with bullets
@@ -329,8 +329,8 @@ export class GameScene extends Scene {
         state.bullets.map((bullet) => [
           bullet.id,
           new Phaser.GameObjects.Sprite(this, bullet.position.x, bullet.position.y, "bullet"),
-        ])
-      )
+        ]),
+      ),
     );
 
     //set nickname for this player if it isn't set yet
@@ -341,13 +341,7 @@ export class GameScene extends Scene {
           sessionStorage.getItem("bullet-mania-nickname")
           // && Date.now() - this.serverRequestBuffer > GameScene.SERVER_REQ_BUFFER_LENGTH
         ) {
-          throttle(() => {
-            // this.serverRequestBuffer = Date.now();
-            this.connection?.writeJson({
-              type: ClientMessageType.SetNickname,
-              nickname: sessionStorage.getItem("bullet-mania-nickname"),
-            });
-          }, 500);
+          setNickname(this.connection, sessionStorage.getItem("bullet-mania-nickname"));
         }
       });
 
@@ -380,7 +374,7 @@ export class GameScene extends Scene {
             `${player.nickname}: ${player.score}`,
             {
               color: player.id === this.currentUserID ? "green" : "white",
-            }
+            },
           ).setScrollFactor(0);
           this.add.existing(newScore);
           this.leaderBoard.set(player.id, newScore);
@@ -405,7 +399,7 @@ export class GameScene extends Scene {
           `${player.nickname}`,
           {
             color: player.id === this.currentUserID ? "green" : "white",
-          }
+          },
         )
           .setVisible(!player.isDead)
           .setAlpha(0.6);
@@ -429,7 +423,7 @@ export class GameScene extends Scene {
           `RELOAD ${Math.max(0, Math.ceil(((player.isReloading || 0) - Date.now()) / 1000))}s`,
           {
             color: "white",
-          }
+          },
         )
           .setVisible(player.isReloading !== undefined && !player.isDead)
           .setAlpha(0.6);
@@ -582,4 +576,13 @@ function lerpBullet(from: Bullet, to: Bullet, pctElapsed: number): Bullet {
       y: from.position.y + (to.position.y - from.position.y) * pctElapsed,
     },
   };
+}
+const setNickname = 
+  throttle((connection: HathoraConnection | undefined, nickname: string | null) => {
+    // this.serverRequestBuffer = Date.now();
+  connection?.writeJson({
+      type: ClientMessageType.SetNickname,
+      nickname,
+    });
+  }, 500);
 }
