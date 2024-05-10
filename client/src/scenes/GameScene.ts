@@ -1,4 +1,5 @@
 import Phaser, { Math as pMath, Scene } from "phaser";
+import throttle from "lodash.throttle";
 import { InterpolationBuffer } from "interpolation-buffer";
 import { HathoraClient, HathoraConnection } from "@hathora/client-sdk";
 
@@ -337,14 +338,16 @@ export class GameScene extends Scene {
       .filter((p) => p.id === this.currentUserID && p.nickname !== sessionStorage.getItem("bullet-mania-nickname"))
       .forEach(() => {
         if (
-          sessionStorage.getItem("bullet-mania-nickname") &&
-          Date.now() - this.serverRequestBuffer > GameScene.SERVER_REQ_BUFFER_LENGTH
+          sessionStorage.getItem("bullet-mania-nickname")
+          // && Date.now() - this.serverRequestBuffer > GameScene.SERVER_REQ_BUFFER_LENGTH
         ) {
-          this.serverRequestBuffer = Date.now();
-          this.connection?.writeJson({
-            type: ClientMessageType.SetNickname,
-            nickname: sessionStorage.getItem("bullet-mania-nickname"),
-          });
+          throttle(() => {
+            // this.serverRequestBuffer = Date.now();
+            this.connection?.writeJson({
+              type: ClientMessageType.SetNickname,
+              nickname: sessionStorage.getItem("bullet-mania-nickname"),
+            });
+          }, 500);
         }
       });
 
