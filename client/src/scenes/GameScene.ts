@@ -1,5 +1,5 @@
 import Phaser, { Math as pMath, Scene } from "phaser";
-import throttle from "lodash.throttle";
+import debounce from "lodash.debounce";
 import { InterpolationBuffer } from "interpolation-buffer";
 import { HathoraClient, HathoraConnection } from "@hathora/client-sdk";
 
@@ -341,7 +341,7 @@ export class GameScene extends Scene {
           sessionStorage.getItem("bullet-mania-nickname")
           // && Date.now() - this.serverRequestBuffer > GameScene.SERVER_REQ_BUFFER_LENGTH
         ) {
-          throttle(() => {
+          debounce(() => {
             // this.serverRequestBuffer = Date.now();
             this.connection?.writeJson({
               type: ClientMessageType.SetNickname,

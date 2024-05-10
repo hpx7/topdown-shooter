@@ -12,7 +12,7 @@
     "@react-oauth/google": "^0.10.0",
     "dayjs": "^1.11.7",
     "interpolation-buffer": "^1.2.5",
-    "lodash.throttle": "^4.1.1",
+    "lodash.debounce": "^4.0.8",
     "phaser": "^3.55.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -21,6 +21,7 @@
     "use-interval": "^1.4.0"
   },
   "devDependencies": {
+    "@types/lodash.debounce": "^4.0.9",
     "@types/lodash.throttle": "^4.1.9",
     "@types/node": "^18.6.3",
     "@types/react": "^18.0.34",
