@@ -13,7 +13,7 @@ import { HathoraCloud } from "@hathora/cloud-sdk-typescript";
 const hathoraSdk = new HathoraCloud({
   serverURL: process.env.HATHORA_SERVER_URL ?? undefined,
   appId: process.env.HATHORA_APP_ID!,
-  security: { hathoraDevToken: process.env.DEVELOPER_TOKEN! },
+  hathoraDevToken: process.env.DEVELOPER_TOKEN!,
 });
 
 // The millisecond tick rate
@@ -156,7 +156,7 @@ const store: Application = {
     console.log("subscribeUser", roomId, userId);
     try {
       const roomInfo = await hathoraSdk.roomV2.getRoomInfo(roomId);
-      const roomConfig = JSON.parse(roomInfo.room!.roomConfig) as RoomConfig;
+      const roomConfig = JSON.parse(roomInfo.roomConfig!) as RoomConfig;
 
       if (!rooms.has(roomId)) {
         rooms.set(roomId, initializeRoom(roomConfig.capacity, roomConfig.winningScore, roomConfig.isGameEnd));
@@ -236,7 +236,7 @@ const store: Application = {
 
     if (message.type === ClientMessageType.SetNickname) {
       player.nickname = message.nickname;
-      updateRoomConfig(game, roomId);
+      updateRoomConfig(game, roomId, player);
     } else if (message.type === ClientMessageType.SetDirection) {
       player.direction = message.direction;
     } else if (message.type === ClientMessageType.SetAngle) {
@@ -471,13 +471,19 @@ async function endGameCleanup(roomId: string, game: InternalState, winningPlayer
   }, 10000);
 }
 
-async function updateRoomConfig(game: InternalState, roomId: string) {
+async function updateRoomConfig(game: InternalState, roomId: string, playerNewNickname?: InternalPlayer) {
   const roomConfig: RoomConfig = {
     capacity: 0,
     winningScore: game.winningScore,
-    playerNicknameMap: Object.fromEntries(game.players.map((player) => [player.id, player.nickname ?? player.id])),
+    playerNicknameMap: Object.fromEntries(game.players.map((player) => {
+      if (playerNewNickname && player.id == playerNewNickname.id) {
+        return [player.id, playerNewNickname.nickname ?? player.id];
+      } else {
+        return [player.id, player.nickname ?? player.id];
+      }
+    })),
     isGameEnd: game.isGameEnd,
     winningPlayerId: game.winningPlayerId,
   };
-  return await hathoraSdk.roomV2.updateRoomConfig({ roomConfig: JSON.stringify(roomConfig) }, roomId);
+  return await hathoraSdk.roomV2.updateRoomConfig(roomId, { roomConfig: JSON.stringify(roomConfig) } );
 }

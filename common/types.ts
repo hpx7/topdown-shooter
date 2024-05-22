@@ -1,4 +1,4 @@
-import { Region } from "@hathora/hathora-cloud-sdk";
+import {Region} from "@hathora/cloud-sdk-typescript/models/components";
 
 export type Direction = {
   x: number;

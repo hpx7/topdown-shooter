@@ -55,24 +55,21 @@ function App() {
         }
 
         try {
-          const roomConfig = JSON.parse(lobbyInfo.roomConfig) as RoomConfig;
+          const roomConfig = JSON.parse(lobbyInfo.roomConfig || "") as RoomConfig;
 
           if (!roomConfig.isGameEnd) {
             const connect = new HathoraConnection(roomIdFromUrl, connectionInfo);
             connect.onClose(async () => {
               // If game has ended, we want updated lobby state
-              const { lobbyV3: updatedLobbyInfo } = await hathoraSdk.lobbyV3.getLobbyInfoByRoomId(roomIdFromUrl);
-              if (updatedLobbyInfo == null) {
-                return;
-              }
-              const updatedRoomConfig = JSON.parse(updatedLobbyInfo.roomConfig) as RoomConfig;
+              const updatedLobbyInfo = await hathoraSdk.lobbyV3.getLobbyInfoByRoomId(roomIdFromUrl);
+              const updatedRoomConfig = JSON.parse(updatedLobbyInfo.roomConfig ?? "") as RoomConfig;
               setSessionMetadata({
                 serverUrl: `${connectionInfo.host}:${connectionInfo.port}`,
                 region: updatedLobbyInfo.region,
                 roomId: updatedLobbyInfo.roomId,
                 capacity: updatedRoomConfig.capacity,
                 winningScore: updatedRoomConfig.winningScore,
-                isGameEnd: !!updatedRoomConfig.isGameEnd,
+                isGameEnd: updatedRoomConfig.isGameEnd,
                 winningPlayerId: updatedRoomConfig.winningPlayerId,
                 playerNicknameMap: updatedRoomConfig.playerNicknameMap,
                 creatorId: updatedLobbyInfo.createdBy,
@@ -222,20 +219,25 @@ async function getToken(googleIdToken: string | undefined): Promise<Token> {
       value: maybeToken,
     } as Token;
   }
+  let loginResponse;
   if (googleIdToken == null) {
-    const { loginResponse } = await hathoraSdk.authV1.loginAnonymous();
-    if (loginResponse == null) {
+    try {
+      loginResponse = await hathoraSdk.authV1.loginAnonymous();
+      return { value: loginResponse.token, type: "anonymous" };
+    } catch (err) {
+      console.log(err);
       throw new Error("Failed to login anonymously");
     }
-    return { value: loginResponse.token, type: "anonymous" };
   }
-  const { loginResponse } = await hathoraSdk.authV1.loginGoogle({ idToken: googleIdToken });
-  if (loginResponse == null) {
+  try {
+    loginResponse = await hathoraSdk.authV1.loginGoogle({ idToken: googleIdToken });
+    sessionStorage.setItem("bullet-mania-token", loginResponse.token);
+    sessionStorage.setItem("bullet-mania-token-type", "google");
+    return { value: loginResponse.token, type: "google" };
+  } catch (err) {
+    console.log(err);
     throw new Error("Failed to login with google");
   }
-  sessionStorage.setItem("bullet-mania-token", loginResponse.token);
-  sessionStorage.setItem("bullet-mania-token-type", "google");
-  return { value: loginResponse.token, type: "google" };
 }
 
 function getRoomIdFromUrl(): string | undefined {
