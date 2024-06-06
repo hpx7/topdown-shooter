@@ -1,4 +1,4 @@
-import { LobbyV3 } from "@hathora/cloud-sdk-typescript/models/components";
+import { LobbyV3, TransportType } from "@hathora/cloud-sdk-typescript/models/components";
 import { HathoraCloud } from "@hathora/cloud-sdk-typescript";
 import { ConnectionDetails } from "@hathora/client-sdk";
 
@@ -31,23 +31,31 @@ export const Token = {
 export async function isReadyForConnect(
   appId: string,
   roomId: string,
-  hathoraSdk: HathoraCloud
+  hathoraSdk: HathoraCloud,
 ): Promise<{ lobbyInfo: LobbyV3; connectionInfo: ConnectionDetails }> {
   const MAX_CONNECT_ATTEMPTS = 50;
   const TRY_CONNECT_INTERVAL_MS = 1000;
 
   try {
-    const lobbyInfo = await hathoraSdk.lobbyV3.getLobbyInfoByRoomId(roomId);
+    const lobbyInfo = await hathoraSdk.lobbiesV3.getLobbyInfoByRoomId(roomId);
     if (lobbyInfo.visibility === "local") {
       return new Promise<{ lobbyInfo: LobbyV3; connectionInfo: ConnectionDetails }>((resolve) =>
-        resolve({ lobbyInfo, connectionInfo: LOCAL_CONNECTION_DETAILS })
+        resolve({ lobbyInfo, connectionInfo: LOCAL_CONNECTION_DETAILS }),
       );
     }
 
     for (let i = 0; i < MAX_CONNECT_ATTEMPTS; i++) {
-      const connectionInfoV2 = await hathoraSdk.roomV2.getConnectionInfo(roomId);
+      const connectionInfoV2 = await hathoraSdk.roomsV2.getConnectionInfo(roomId);
       if (connectionInfoV2.exposedPort !== undefined) {
-        return { lobbyInfo, connectionInfo: connectionInfoV2.exposedPort };
+        return {
+          lobbyInfo,
+          connectionInfo: {
+            ...connectionInfoV2.exposedPort,
+            transportType: isRecognized(TransportType, connectionInfoV2.exposedPort.transportType)
+              ? connectionInfoV2.exposedPort.transportType
+              : "tcp",
+          },
+        };
       }
       await new Promise((resolve) => setTimeout(resolve, TRY_CONNECT_INTERVAL_MS));
     }
@@ -59,4 +67,13 @@ export async function isReadyForConnect(
 
 export function getHathoraSdk(appId: string | undefined): HathoraCloud {
   return new HathoraCloud({ appId });
+}
+
+function isRecognized<U>(mapping: { [k: string]: U }, candidate: unknown): candidate is U {
+  for (const [, member] of Object.entries(mapping)) {
+    if (member === candidate) {
+      return true;
+    }
+  }
+  return false;
 }

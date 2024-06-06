@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "@hathora/client-sdk": "^1.0.0",
-    "@hathora/cloud-sdk-typescript": "^2.2.8",
+    "@hathora/cloud-sdk-typescript": "^2.3.0",
     "@heroicons/react": "^2.0.17",
     "@react-oauth/google": "^0.10.0",
     "dayjs": "^1.11.7",

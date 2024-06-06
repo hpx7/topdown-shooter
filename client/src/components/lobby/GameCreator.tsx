@@ -83,13 +83,13 @@ export function GameCreator(props: GameCreatorProps) {
                     playerNicknameMap: {},
                     isGameEnd: false,
                   };
-                  const lobbyV3 = await hathoraSdk.lobbyV3.createLobby(
+                  const lobbyV3 = await hathoraSdk.lobbiesV3.createLobby(
                     { playerAuth: playerToken.value },
                     {
                       region,
                       visibility: visibility as LobbyVisibility,
                       roomConfig: JSON.stringify(roomConfig),
-                    }
+                    },
                   );
                   // Wait until lobby connection details are ready before redirect player to match
                   await isReadyForConnect(appId, lobbyV3.roomId, hathoraSdk);
