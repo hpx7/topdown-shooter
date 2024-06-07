@@ -25,9 +25,9 @@ export function PublicLobbyList(props: PublicLobbyListProps) {
   const [readyRooms, setReadyRooms] = React.useState<Set<string>>(new Set());
 
   useEffect(() => {
-    lobbies.forEach(async (l) => {
+    lobbies.forEach(async (lobby) => {
       // Ensure that lobby is ready for connections before adding to visible lobby list
-      await isReadyForConnect(appId, l.roomId, hathoraSdk);
+      await isReadyForConnect(appId, lobby.roomId, hathoraSdk);
       setReadyRooms((prev) => {
         return new Set([...prev, l.roomId]);
       });
@@ -54,7 +54,7 @@ export function PublicLobbyList(props: PublicLobbyListProps) {
         >
           {lobbies.length > 0 ? (
             lobbies
-              .filter((l) => readyRooms.has(l.roomId))
+              .filter((lobby) => readyRooms.has(lobby.roomId))
               .sort((a, b) => (new Date(b.createdAt).getTime() || 0) - (new Date(a.createdAt).getTime() || 0))
               .map((lobby, index) => {
                 const roomConfig = JSON.parse(lobby.roomConfig ?? "{}") as RoomConfig;
@@ -148,18 +148,18 @@ function useLobbies(appId: string): LobbyV3[] {
   const [lobbies, setLobbies] = React.useState<LobbyV3[]>([]);
   React.useEffect(() => {
     if (appId) {
-      hathoraSdk.lobbiesV3.listActivePublicLobbies().then((l) => {
-        if (l != null) {
-          setLobbies(l);
+      hathoraSdk.lobbiesV3.listActivePublicLobbies().then((lobbies) => {
+        if (lobbies != null) {
+          setLobbies(lobbies);
         }
       });
     }
   }, [appId]);
   useInterval(() => {
     if (appId) {
-      hathoraSdk.lobbiesV3.listActivePublicLobbies().then((l) => {
-        if (l != null) {
-          setLobbies(l);
+      hathoraSdk.lobbiesV3.listActivePublicLobbies().then((lobbies) => {
+        if (lobbies != null) {
+          setLobbies(lobbies);
         }
       });
     }
