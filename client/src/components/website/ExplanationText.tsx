@@ -409,7 +409,7 @@ function useLobbies(appId: string): LobbyV3[] {
   }, [appId]);
   useInterval(() => {
     if (appId) {
-      hathoraSdk.lobbyV3.listActivePublicLobbies().then(({ classes }) => {
+      hathoraSdk.lobbiesV3.listActivePublicLobbies().then(({ classes }) => {
         if (classes != null) {
           setLobbies(classes);
         }
@@ -477,12 +477,12 @@ const hathoraSdk = new HathoraCloud({ appId: env_variable.HATHORA_APP_ID });`}
             </Link>
           </p>
           <CodeBlock>{`// This step is only needed if you want to validate RoomConfig before connecting a player
-const lobbyInfo = await hathoraSdk.lobbyV3.getLobbyInfoByRoomId(roomId);
+const lobbyInfo = await hathoraSdk.lobbiesV3.getLobbyInfoByRoomId(roomId);
 // lobbyInfo will contain details like region and roomConfig`}</CodeBlock>
           <p id={"connectionInfo"} className={"text-neutralgray-300 mt-4 mb-2 ml-1 font-hathoraBody"}>
             <a href="#connectionInfo">Get connection info (host and port) to route your player</a>
           </p>
-          <CodeBlock>{`const { connectionInfoV2 } = await hathoraSdk.roomV2.getConnectionInfo(roomId);
+          <CodeBlock>{`const { connectionInfoV2 } = await hathoraSdk.roomsV2.getConnectionInfo(roomId);
 
 // Use your network transport of choice (using Hathora BuildKits here)
 import { HathoraConnection } from "@hathora/client-sdk";
@@ -515,7 +515,7 @@ if ( roomIdFromUrl != null ) {
           const connect = new HathoraConnection(roomIdFromUrl, connectionInfo);
           connect.onClose(async () => {
             // If game has ended, we want updated lobby info
-            const updatedLobbyInfo = await hathoraSdk.lobbyV3.getLobbyInfoByRoomId(roomIdFromUrl);
+            const updatedLobbyInfo = await hathoraSdk.lobbiesV3.getLobbyInfoByRoomId(roomIdFromUrl);
             const updatedRoomConfig = JSON.parse(updatedLobbyInfo.roomConfig) as RoomConfig | undefined;
             setFailedToConnect(true);
           });
@@ -541,10 +541,10 @@ if ( roomIdFromUrl != null ) {
   const MAX_CONNECT_ATTEMPTS = 50;
   const TRY_CONNECT_INTERVAL_MS = 1000;
 
-  const lobbyInfo = await hathoraSdk.lobbyV3.getLobbyInfoByRoomId(roomIdFromUrl);
+  const lobbyInfo = await hathoraSdk.lobbiesV3.getLobbyInfoByRoomId(roomIdFromUrl);
 
   for (let i = 0; i < MAX_CONNECT_ATTEMPTS; i++) {
-    const res = await hathoraSdk.roomV2.getConnectionInfo(roomId);
+    const res = await hathoraSdk.roomsV2.getConnectionInfo(roomId);
     if (res.connectionInfoV2?.status === ConnectionInfoV2Status.Active) {
       return { lobbyInfo, connectionInfo: res.connectionInfoV2 };
     }
@@ -563,7 +563,7 @@ const hathoraSdk = new HathoraCloud({ appId: env_variable.HATHORA_APP_ID });
 async subscribeUser(roomId: RoomId, userId: string): Promise<void> {
   console.log("subscribeUser", roomId, userId);
   try {
-    const lobbyInfo = await hathoraSdk.lobbyV3.getLobbyInfoByRoomId(roomId);
+    const lobbyInfo = await hathoraSdk.lobbiesV3.getLobbyInfoByRoomId(roomId);
     const roomConfig = JSON.parse(lobbyInfo.roomConfig) as RoomConfig | undefined;
 
     if (!rooms.has(roomId)) {
@@ -642,7 +642,7 @@ const hathoraSdk = new HathoraCloud({
 
 // RoomConfig is meant to hold custom objects
 let myCustomRoomConfig = { isGameEnd: true,  winningPlayerId: myGameData.winningPlayerId,}
-const res = await hathoraSdk.roomV2.updateRoomConfig({
+const res = await hathoraSdk.roomsV2.updateRoomConfig({
   roomConfig: JSON.stringify(myCustomRoomConfig)
 }, roomId);`}</CodeBlock>
         </div>
@@ -662,7 +662,7 @@ async function updateRoomConfig(game: InternalState, roomId: string) {
     isGameEnd: game.isGameEnd,
     winningPlayerId: game.winningPlayerId,
   };
-  return await hathoraSdk.roomV2.updateRoomConfig({ roomConfig: JSON.stringify(roomConfig) }, roomId);
+  return await hathoraSdk.roomsV2.updateRoomConfig({ roomConfig: JSON.stringify(roomConfig) }, roomId);
 }`}</CodeBlock>
           <BulletManiaCodeLink
             links={[
@@ -699,7 +699,7 @@ const hathoraSdk = new HathoraCloud({
 
 // ...Disconnect players...
 
-const lobby = hathoraSdk.roomV2.destroyRoom(roomId);`}</CodeBlock>
+const lobby = hathoraSdk.roomsV2.destroyRoom(roomId);`}</CodeBlock>
         </div>
         <div className={`${showReactUsage ? "block" : "hidden"}`}>
           <CodeBlock>{`import { HathoraCloud } from "@hathora/cloud-sdk-typescript";
@@ -722,7 +722,7 @@ async function endGameCleanup(roomId: string, game: InternalState, winningPlayer
       server.closeConnection(roomId, playerId, "game has ended, disconnecting players");
     });
     console.log("destroying room: ", roomId);
-    hathoraSdk.roomV2.destroyRoom(roomId);
+    hathoraSdk.roomsV2.destroyRoom(roomId);
   }, 10000);
 }`}</CodeBlock>
           <BulletManiaCodeLink
