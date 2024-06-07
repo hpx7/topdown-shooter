@@ -293,7 +293,7 @@ const hathoraSdk = new HathoraCloud({ appId: env_variable.HATHORA_APP_ID });`}
           <p className={"text-neutralgray-300 mt-4 mb-2 ml-1 font-hathoraBody"}>
             Authenticated players (via client) can create lobbies
           </p>
-          <CodeBlock>{`const { lobbyV3 } = await hathoraSdk.lobbyV3.createLobby(
+          <CodeBlock>{`const { lobbyV3 } = await hathoraSdk.lobbiesV3.createLobby(
   {
     createLobbyV3Params: {
       region: Region.Seattle,
@@ -328,7 +328,7 @@ const hathoraSdk = new HathoraCloud({ appId: env_variable.HATHORA_APP_ID });
           playerNicknameMap: {},
           isGameEnd: false,
         };
-        const { lobbyV3 } = await hathoraSdk.lobbyV3.createLobby(
+        const { lobbyV3 } = await hathoraSdk.lobbiesV3.createLobby(
           {
             createLobbyV3Params: {
               region,
@@ -390,7 +390,7 @@ const hathoraSdk = new HathoraCloud({ appId: env_variable.HATHORA_APP_ID });
           <CodeBlock>{`import { HathoraCloud } from "@hathora/cloud-sdk-typescript";
 const hathoraSdk = new HathoraCloud({ appId: env_variable.HATHORA_APP_ID });
 
-const publicLobbies = hathoraSdk.lobbyV3.listActivePublicLobbies();`}</CodeBlock>
+const publicLobbies = hathoraSdk.lobbiesV3.listActivePublicLobbies();`}</CodeBlock>
         </div>
         <div className={`${showReactUsage ? "block" : "hidden"}`}>
           <CodeBlock>{`import { HathoraCloud } from "@hathora/cloud-sdk-typescript";
@@ -400,7 +400,7 @@ function useLobbies(appId: string): LobbyV3[] {
   const [lobbies, setLobbies] = React.useState<LobbyV3[]>([]);
   React.useEffect(() => {
     if (appId) {
-      hathoraSdk.lobbyV3.listActivePublicLobbies().then(({ classes }) => {
+      hathoraSdk.lobbiesV3.listActivePublicLobbies().then(({ classes }) => {
         if (classes != null) {
           setLobbies(classes);
         }
