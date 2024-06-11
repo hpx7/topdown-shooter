@@ -29,7 +29,7 @@ export function PublicLobbyList(props: PublicLobbyListProps) {
       // Ensure that lobby is ready for connections before adding to visible lobby list
       await isReadyForConnect(appId, lobby.roomId, hathoraSdk);
       setReadyRooms((prev) => {
-        return new Set([...prev, l.roomId]);
+        return new Set([...prev, lobby.roomId]);
       });
     });
   }, [lobbies, appId]);
@@ -148,20 +148,12 @@ function useLobbies(appId: string): LobbyV3[] {
   const [lobbies, setLobbies] = React.useState<LobbyV3[]>([]);
   React.useEffect(() => {
     if (appId) {
-      hathoraSdk.lobbiesV3.listActivePublicLobbies().then((lobbies) => {
-        if (lobbies != null) {
-          setLobbies(lobbies);
-        }
-      });
+      hathoraSdk.lobbiesV3.listActivePublicLobbies().then(setLobbies);
     }
   }, [appId]);
   useInterval(() => {
     if (appId) {
-      hathoraSdk.lobbiesV3.listActivePublicLobbies().then((lobbies) => {
-        if (lobbies != null) {
-          setLobbies(lobbies);
-        }
-      });
+      hathoraSdk.lobbiesV3.listActivePublicLobbies().then(setLobbies);
     }
   }, 2000);
   return lobbies;

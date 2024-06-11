@@ -400,20 +400,12 @@ function useLobbies(appId: string): LobbyV3[] {
   const [lobbies, setLobbies] = React.useState<LobbyV3[]>([]);
   React.useEffect(() => {
     if (appId) {
-      hathoraSdk.lobbiesV3.listActivePublicLobbies().then((lobbies) => {
-        if (lobbies != null) {
-          setLobbies(lobbies);
-        }
-      });
+      hathoraSdk.lobbiesV3.listActivePublicLobbies().then(setLobbies);
     }
   }, [appId]);
   useInterval(() => {
     if (appId) {
-      hathoraSdk.lobbiesV3.listActivePublicLobbies().then((lobbies) => {
-        if (lobbies != null) {
-          setLobbies(lobbies);
-        }
-      });
+      hathoraSdk.lobbiesV3.listActivePublicLobbies().then(setLobbies);
     }
   }, 2000);
   return lobbies;
