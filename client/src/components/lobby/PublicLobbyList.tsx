@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 dayjs.extend(relativeTime);
 
 import { ClockIcon, TrophyIcon, UserIcon, UsersIcon } from "@heroicons/react/24/outline";
-import { LobbyV3, Region } from "@hathora/cloud-sdk-typescript/dist/sdk/models/shared";
+import { LobbyV3, Region } from "@hathora/cloud-sdk-typescript/models/components";
 
 import { getHathoraSdk, isReadyForConnect } from "../../utils";
 import { RoomConfig } from "../../../../common/types";
@@ -25,9 +25,9 @@ export function PublicLobbyList(props: PublicLobbyListProps) {
   const [readyRooms, setReadyRooms] = React.useState<Set<string>>(new Set());
 
   useEffect(() => {
-    lobbies.forEach(async (l) => {
+    lobbies.forEach(async (lobby) => {
       // Ensure that lobby is ready for connections before adding to visible lobby list
-      await isReadyForConnect(appId, l.roomId, hathoraSdk);
+      await isReadyForConnect(appId, lobby.roomId, hathoraSdk);
       setReadyRooms((prev) => {
         return new Set([...prev, l.roomId]);
       });
@@ -54,10 +54,10 @@ export function PublicLobbyList(props: PublicLobbyListProps) {
         >
           {lobbies.length > 0 ? (
             lobbies
-              .filter((l) => readyRooms.has(l.roomId))
+              .filter((lobby) => readyRooms.has(lobby.roomId))
               .sort((a, b) => (new Date(b.createdAt).getTime() || 0) - (new Date(a.createdAt).getTime() || 0))
               .map((lobby, index) => {
-                const roomConfig = JSON.parse(lobby.roomConfig) as RoomConfig;
+                const roomConfig = JSON.parse(lobby.roomConfig ?? "{}") as RoomConfig;
                 return (
                   <tr
                     key={`lobby_${lobby.createdBy}_${lobby.createdAt}`}
@@ -90,7 +90,7 @@ export function PublicLobbyList(props: PublicLobbyListProps) {
                         <div className={"flex items-center gap-1 text-xxs"}>
                           <ClockIcon className="h-4 w-4 text-secondary-700" />
                           <span className={"max-w-[160px] text-ellipsis overflow-hidden whitespace-nowrap"}>{`${dayjs(
-                            lobby.createdAt
+                            lobby.createdAt,
                           ).fromNow()}`}</span>
                         </div>
                         <div className={"flex items-center"}>
@@ -148,18 +148,18 @@ function useLobbies(appId: string): LobbyV3[] {
   const [lobbies, setLobbies] = React.useState<LobbyV3[]>([]);
   React.useEffect(() => {
     if (appId) {
-      hathoraSdk.lobbyV3.listActivePublicLobbies().then(({ classes }) => {
-        if (classes != null) {
-          setLobbies(classes);
+      hathoraSdk.lobbiesV3.listActivePublicLobbies().then((lobbies) => {
+        if (lobbies != null) {
+          setLobbies(lobbies);
         }
       });
     }
   }, [appId]);
   useInterval(() => {
     if (appId) {
-      hathoraSdk.lobbyV3.listActivePublicLobbies().then(({ classes }) => {
-        if (classes != null) {
-          setLobbies(classes);
+      hathoraSdk.lobbiesV3.listActivePublicLobbies().then((lobbies) => {
+        if (lobbies != null) {
+          setLobbies(lobbies);
         }
       });
     }
@@ -178,4 +178,6 @@ export const FLAG_TABLE: Record<Region, string> = {
   Sydney: "🇦🇺",
   Washington_DC: "🇺🇸",
   Sao_Paulo: "🇧🇷",
+  Dallas: "🇺🇸",
+  Los_Angeles: "🇺🇸",
 };

@@ -143,7 +143,7 @@ const rooms: Map<RoomId, InternalState> = new Map();
 
 // Create an object to represent our Store
 const store: Application = {
-  verifyToken(token: string): UserId | undefined {
+  async verifyToken(token: string): Promise<UserId | undefined> {
     const userId = verifyJwt(token, process.env.HATHORA_APP_SECRET!);
     if (userId === undefined) {
       console.error("Failed to verify token", token);
@@ -155,7 +155,7 @@ const store: Application = {
   async subscribeUser(roomId: RoomId, userId: string): Promise<void> {
     console.log("subscribeUser", roomId, userId);
     try {
-      const roomInfo = await hathoraSdk.roomV2.getRoomInfo(roomId);
+      const roomInfo = await hathoraSdk.roomsV2.getRoomInfo(roomId);
       const roomConfig = JSON.parse(roomInfo.roomConfig!) as RoomConfig;
 
       if (!rooms.has(roomId)) {
@@ -218,7 +218,7 @@ const store: Application = {
   },
 
   // onMessage is an integral part of your game's server. It is responsible for reading messages sent from the clients and handling them accordingly, this is where your game's event-based logic should live
-  onMessage(roomId: RoomId, userId: string, data: ArrayBuffer): void {
+  async onMessage(roomId: RoomId, userId: string, data: ArrayBuffer): Promise<void> {
     if (!rooms.has(roomId)) {
       return;
     }
@@ -467,7 +467,7 @@ async function endGameCleanup(roomId: string, game: InternalState, winningPlayer
       server.closeConnection(roomId, playerId, "game has ended, disconnecting players");
     });
     console.log("destroying room: ", roomId);
-    hathoraSdk.roomV2.destroyRoom(roomId);
+    hathoraSdk.roomsV2.destroyRoom(roomId);
   }, 10000);
 }
 
@@ -475,15 +475,17 @@ async function updateRoomConfig(game: InternalState, roomId: string, playerNewNi
   const roomConfig: RoomConfig = {
     capacity: 0,
     winningScore: game.winningScore,
-    playerNicknameMap: Object.fromEntries(game.players.map((player) => {
-      if (playerNewNickname && player.id == playerNewNickname.id) {
-        return [player.id, playerNewNickname.nickname ?? player.id];
-      } else {
-        return [player.id, player.nickname ?? player.id];
-      }
-    })),
+    playerNicknameMap: Object.fromEntries(
+      game.players.map((player) => {
+        if (playerNewNickname && player.id == playerNewNickname.id) {
+          return [player.id, playerNewNickname.nickname ?? player.id];
+        } else {
+          return [player.id, player.nickname ?? player.id];
+        }
+      }),
+    ),
     isGameEnd: game.isGameEnd,
     winningPlayerId: game.winningPlayerId,
   };
-  return await hathoraSdk.roomV2.updateRoomConfig(roomId, { roomConfig: JSON.stringify(roomConfig) } );
+  return await hathoraSdk.roomsV2.updateRoomConfig(roomId, { roomConfig: JSON.stringify(roomConfig) });
 }

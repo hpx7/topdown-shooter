@@ -1,7 +1,7 @@
 {
   "type": "module",
   "dependencies": {
-    "@hathora/cloud-sdk-typescript": "^2.2.8"
+    "@hathora/cloud-sdk-typescript": "^2.3.0"
   },
   "devDependencies": {
     "typescript": "^4.8.3"
