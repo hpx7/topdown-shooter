@@ -28,7 +28,68 @@ function App() {
   const [failedToConnect, setFailedToConnect] = useState(false);
   const [roomIdNotFound, setRoomIdNotFound] = useState<string | undefined>(undefined);
   const [isNicknameAcked, setIsNicknameAcked] = React.useState<boolean>(false);
+  const roomIdFromUrl = getRoomIdFromUrl();
+  useEffect(() => {
+    if (
+      roomIdFromUrl != null &&
+      appId != null &&
+      sessionMetadata?.roomId != roomIdFromUrl &&
+      roomIdNotFound == null &&
+      !failedToConnect &&
+      !sessionMetadata?.isGameEnd
+    ) {
+      // Once we parse roomId from the URL, get connection details to connect player to the server
+      isReadyForConnect(appId, roomIdFromUrl, hathoraSdk)
+        .then(async ({ connectionInfo, lobbyInfo }) => {
+          setRoomIdNotFound(undefined);
+          if (connection != null) {
+            connection.disconnect(1000);
+          }
 
+          try {
+            const roomConfig = JSON.parse(lobbyInfo.roomConfig || "") as RoomConfig;
+
+            if (!roomConfig.isGameEnd) {
+              const connect = new HathoraConnection(roomIdFromUrl, connectionInfo);
+              connect.onClose(async () => {
+                // If game has ended, we want updated lobby state
+                const updatedLobbyInfo = await hathoraSdk.lobbiesV3.getLobbyInfoByRoomId(roomIdFromUrl);
+                const updatedRoomConfig = JSON.parse(updatedLobbyInfo.roomConfig ?? "") as RoomConfig;
+                setSessionMetadata({
+                  serverUrl: `${connectionInfo.host}:${connectionInfo.port}`,
+                  region: updatedLobbyInfo.region,
+                  roomId: updatedLobbyInfo.roomId,
+                  capacity: updatedRoomConfig.capacity,
+                  winningScore: updatedRoomConfig.winningScore,
+                  isGameEnd: updatedRoomConfig.isGameEnd,
+                  winningPlayerId: updatedRoomConfig.winningPlayerId,
+                  playerNicknameMap: updatedRoomConfig.playerNicknameMap,
+                  creatorId: updatedLobbyInfo.createdBy + "",
+                });
+                setFailedToConnect(true);
+              });
+              setConnection(connect);
+            }
+            setSessionMetadata({
+              serverUrl: `${connectionInfo.host}:${connectionInfo.port}`,
+              region: lobbyInfo.region,
+              roomId: lobbyInfo.roomId,
+              capacity: roomConfig.capacity,
+              winningScore: roomConfig.winningScore,
+              isGameEnd: roomConfig.isGameEnd,
+              winningPlayerId: roomConfig.winningPlayerId,
+              playerNicknameMap: roomConfig.playerNicknameMap,
+              creatorId: lobbyInfo.createdBy + "",
+            });
+          } catch (e) {
+            setRoomIdNotFound(roomIdFromUrl);
+          }
+        })
+        .catch(() => {
+          setRoomIdNotFound(roomIdFromUrl);
+        });
+    }
+  }, [connection, failedToConnect, roomIdFromUrl, roomIdNotFound, sessionMetadata?.isGameEnd, sessionMetadata?.roomId]);
   if (appId == null || token == null) {
     return (
       <div
@@ -38,65 +99,7 @@ function App() {
       </div>
     );
   }
-  const roomIdFromUrl = getRoomIdFromUrl();
-  if (
-    roomIdFromUrl != null &&
-    sessionMetadata?.roomId != roomIdFromUrl &&
-    roomIdNotFound == null &&
-    !failedToConnect &&
-    !sessionMetadata?.isGameEnd
-  ) {
-    // Once we parse roomId from the URL, get connection details to connect player to the server
-    isReadyForConnect(appId, roomIdFromUrl, hathoraSdk)
-      .then(async ({ connectionInfo, lobbyInfo }) => {
-        setRoomIdNotFound(undefined);
-        if (connection != null) {
-          connection.disconnect(1000);
-        }
 
-        try {
-          const roomConfig = JSON.parse(lobbyInfo.roomConfig || "") as RoomConfig;
-
-          if (!roomConfig.isGameEnd) {
-            const connect = new HathoraConnection(roomIdFromUrl, connectionInfo);
-            connect.onClose(async () => {
-              // If game has ended, we want updated lobby state
-              const updatedLobbyInfo = await hathoraSdk.lobbiesV3.getLobbyInfoByRoomId(roomIdFromUrl);
-              const updatedRoomConfig = JSON.parse(updatedLobbyInfo.roomConfig ?? "") as RoomConfig;
-              setSessionMetadata({
-                serverUrl: `${connectionInfo.host}:${connectionInfo.port}`,
-                region: updatedLobbyInfo.region,
-                roomId: updatedLobbyInfo.roomId,
-                capacity: updatedRoomConfig.capacity,
-                winningScore: updatedRoomConfig.winningScore,
-                isGameEnd: updatedRoomConfig.isGameEnd,
-                winningPlayerId: updatedRoomConfig.winningPlayerId,
-                playerNicknameMap: updatedRoomConfig.playerNicknameMap,
-                creatorId: updatedLobbyInfo.createdBy + "",
-              });
-              setFailedToConnect(true);
-            });
-            setConnection(connect);
-          }
-          setSessionMetadata({
-            serverUrl: `${connectionInfo.host}:${connectionInfo.port}`,
-            region: lobbyInfo.region,
-            roomId: lobbyInfo.roomId,
-            capacity: roomConfig.capacity,
-            winningScore: roomConfig.winningScore,
-            isGameEnd: roomConfig.isGameEnd,
-            winningPlayerId: roomConfig.winningPlayerId,
-            playerNicknameMap: roomConfig.playerNicknameMap,
-            creatorId: lobbyInfo.createdBy + "",
-          });
-        } catch (e) {
-          setRoomIdNotFound(roomIdFromUrl);
-        }
-      })
-      .catch(() => {
-        setRoomIdNotFound(roomIdFromUrl);
-      });
-  }
   return (
     <GoogleOAuthProvider clientId={process.env.GOOGLE_AUTH_CLIENT_ID ?? ""}>
       <GithubCorner />
